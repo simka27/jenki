@@ -8,6 +8,6 @@ public class SampleTests
     public void TrueShouldBeTrue_Test()
     {
         // Простейший тест для проверки CI-конвейера
-        Assert.Equal(1, 1);
+        Assert.Equal(1, 2);
     }
 }
