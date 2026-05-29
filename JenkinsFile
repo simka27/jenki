@@ -1,20 +1,12 @@
 pipeline {
     agent any
 
-    tools {
-        // Подключаем .NET SDK, настроенный в инструментах Jenkins
-        dotnetsdk 'dotnet8'
+    // Переменная, чтобы .NET не ругался на отсутствие ICU (локализации)
+    environment {
+        DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = '1'
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                // Очистка и получение актуального кода из репозитория
-                cleanWs()
-                checkout scm
-            }
-        }
-
         stage('Restore Dependencies') {
             steps {
                 echo 'Restoring NuGet packages...'
@@ -32,33 +24,8 @@ pipeline {
         stage('Run Automated Tests') {
             steps {
                 echo 'Running xUnit Tests...'
-                // Запуск тестов с генерацией логов сборки
-                sh 'dotnet test --configuration Release --no-build --logger:"trx;LogFileName=test_results.trx"'
+                sh 'dotnet test --configuration Release --no-build'
             }
-            post {
-                always {
-                    // Публикация результатов тестов в интерфейс Jenkins
-                    mstest testResultsFile: '**/test_results.trx', keepLongStdio: true
-                }
-            }
-        }
-
-        stage('Publish & Artifact') {
-            steps {
-                echo 'Publishing application artifacts...'
-                sh 'dotnet publish MyWebPageApp/MyWebPageApp.csproj --configuration Release --output ./publish'
-                // Архивируем собранный артефакт веб-страницы
-                archiveArtifacts artifacts: 'publish/**/*', fingerprint: true
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'CI/CD Pipeline finished successfully! Application is ready for deployment.'
-        }
-        failure {
-            echo 'Pipeline failed. Check test results or build logs.'
         }
     }
 }
